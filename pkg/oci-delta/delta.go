@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	mediaTypeDelta              = "application/vnd.redhat.oci-delta.v1"
+	mediaTypeDelta              = "application/vnd.io.github.containers.oci-delta.v1"
 	mediaTypeTarDiff            = "application/vnd.tar-diff"
 	annotationDeltaTarget       = "io.github.containers.delta.target"
 	annotationDeltaSource       = "io.github.containers.delta.source"

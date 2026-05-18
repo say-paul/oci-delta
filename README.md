@@ -152,7 +152,7 @@ blobs/sha256/<sig-payload-hash>     - (optional) cosign signature payload layer(
 ### Delta manifest
 
 The delta manifest is a standard OCI image manifest with `artifactType` set to
-`application/vnd.redhat.oci-delta.v1` and an empty config (`application/vnd.oci.empty.v1+json`).
+`application/vnd.io.github.containers.oci-delta.v1` and an empty config (`application/vnd.oci.empty.v1+json`).
 The `subject` field references the target image manifest, enabling referrer discovery when the
 delta is stored in a registry.
 
@@ -171,7 +171,7 @@ Example delta manifest:
 ```json
 {
   "schemaVersion": 2,
-  "artifactType": "application/vnd.redhat.oci-delta.v1",
+  "artifactType": "application/vnd.io.github.containers.oci-delta.v1",
   "config": {
     "mediaType": "application/vnd.oci.empty.v1+json",
     "digest": "sha256:44136fa355b367...",

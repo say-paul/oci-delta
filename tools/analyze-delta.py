@@ -68,7 +68,7 @@ class TarIndex:
             return f.read(size)
 
 
-MEDIA_DELTA           = "application/vnd.redhat.oci-delta.v1"
+MEDIA_DELTA           = "application/vnd.io.github.containers.oci-delta.v1"
 MEDIA_TAR_DIFF       = "application/vnd.tar-diff"
 MEDIA_IMAGE_MANIFEST = "application/vnd.oci.image.manifest.v1+json"
 MEDIA_IMAGE_CONFIG   = "application/vnd.oci.image.config.v1+json"
