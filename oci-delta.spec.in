@@ -42,8 +42,6 @@ GO_BUILD_PATH=$PWD/_build
 install -m 0755 -vd $(dirname $GO_BUILD_PATH/src/%{goipath})
 ln -fs $PWD $GO_BUILD_PATH/src/%{goipath}
 cd $GO_BUILD_PATH/src/%{goipath}
-install -m 0755 -vd _bin
-export PATH=$PWD/_bin${PATH:+:$PATH}
 export GOPATH=$GO_BUILD_PATH:%{gopath}
 export GOFLAGS+=" -mod=vendor"
 %endif
@@ -54,11 +52,11 @@ export GOFLAGS+=" -mod=vendor"
 %undefine gomodulesmode
 %endif
 
-%gobuild -o _bin/oci-delta %{goipath}/cmd/oci-delta
+%gobuild -o %{gobuilddir}/bin/oci-delta %{goipath}
 
 %install
 install -m 0755 -vd                          %{buildroot}%{_bindir}
-install -m 0755 -vp _bin/oci-delta           %{buildroot}%{_bindir}/
+install -m 0755 -vp %{gobuilddir}/bin/*      %{buildroot}%{_bindir}/
 
 %check
 export GOFLAGS="-buildmode=pie"

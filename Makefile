@@ -6,7 +6,7 @@ VERSION := 0.1.0
 PACKAGE_NAME_VERSION = oci-delta-$(VERSION)
 
 build:
-	go build -o oci-delta ./cmd/oci-delta
+	go build
 
 clean:
 	rm -f oci-delta
@@ -20,7 +20,7 @@ test: build
 	tests/integration-test.sh
 
 test-coverage:
-	go build -cover -o oci-delta ./cmd/oci-delta
+	go build -cover -o oci-delta
 	rm -rf $(COVERDIR) && mkdir -p $(COVERDIR)/unit $(COVERDIR)/integration
 	go test -cover ./... -args -test.gocoverdir=$(COVERDIR)/unit
 	GOCOVERDIR=$(COVERDIR)/integration python3 tests/test-synthetic.py
@@ -31,7 +31,7 @@ fmt:
 	go fmt ./...
 
 install:
-	go install ./cmd/oci-delta
+	go install
 
 #
 # RPM packaging
