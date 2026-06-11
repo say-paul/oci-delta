@@ -4,6 +4,7 @@
 %global goipath         github.com/containers/oci-delta
 
 %global with_debug 1
+%global gobuildtags     exclude_graphdriver_aufs exclude_graphdriver_btrfs exclude_graphdriver_zfs
 
 %if 0%{?with_debug}
 %global _find_debuginfo_dwz_opts %{nil}
@@ -51,7 +52,7 @@ use binary diffs (tar-diff) for changed layers.
 # https://github.com/golang/go/issues/75079
 export GOEXPERIMENT="nodwarf5"
 
-%gobuild -o %{gobuilddir}/bin/oci-delta .
+%gobuild -o %{gobuilddir}/bin/oci-delta -tags "%{gobuildtags}" .
 
 %install
 install -m 0755 -vd %{buildroot}%{_bindir}
@@ -59,7 +60,7 @@ install -m 0755 -vp %{gobuilddir}/bin/* %{buildroot}%{_bindir}
 
 %check
 %if %{with check}
-%gotest ./...
+%gotest -tags "%{gobuildtags}" ./...
 %endif
 
 %files
