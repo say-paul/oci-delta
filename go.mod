@@ -1,11 +1,11 @@
 module github.com/containers/oci-delta
 
-go 1.25
+go 1.26
 
 require (
 	github.com/containers/image/v5 v5.36.2
 	github.com/containers/storage v1.59.1
-	github.com/containers/tar-diff v0.4.1-0.20260415123852-8e7a7e1030f7
+	github.com/containers/tar-diff v0.5.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/sigstore/sigstore v1.9.5
@@ -34,7 +34,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.18.5 // indirect
+	github.com/klauspost/compress v1.18.6 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/letsencrypt/boulder v0.0.0-20240620165639-de9c06129bec // indirect
