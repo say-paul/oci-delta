@@ -29,8 +29,7 @@ Source0:        %{gosource}
 Source1:        %{archivename}-vendor.tar.bz2
 
 BuildRequires:  go-rpm-macros
-BuildRequires:  ostree-devel
-BuildRequires:  pkgconfig
+BuildRequires:  pkgconfig(ostree-1)
 
 %description
 Creates and applies delta files between OCI image archives for bootc
@@ -41,6 +40,7 @@ use binary diffs (tar-diff) for changed layers.
 %prep
 %goprep -A
 %setup -q -T -D -a1 %{forgesetupargs}
+cp vendor/LICENSE-BREAKDOWN.txt modules.txt
 
 %build
 %global gomodulesmode GO111MODULE=on
@@ -53,6 +53,7 @@ export GOEXPERIMENT="nodwarf5"
 %install
 install -m 0755 -vd %{buildroot}%{_bindir}
 install -m 0755 -vp %{gobuilddir}/bin/* %{buildroot}%{_bindir}
+install -D -m 0644 -vp docs/man/oci-delta.1 %{buildroot}%{_mandir}/man1/oci-delta.1
 
 %check
 %if %{with check}
@@ -60,9 +61,10 @@ install -m 0755 -vp %{gobuilddir}/bin/* %{buildroot}%{_bindir}
 %endif
 
 %files
-%license LICENSE vendor/modules.txt
+%license LICENSE modules.txt
 %doc README.md
 %{_bindir}/oci-delta
+%{_mandir}/man1/oci-delta.1*
 
 %changelog
 %autochangelog

@@ -7,6 +7,16 @@ downstream_package_name: oci-delta
 specfile_path: build/package/rpm/oci-delta.spec
 
 upstream_tag_template: v{version}
+copy_upstream_release_description: true
+
+issue_repository: https://github.com/containers/oci-delta
+
+files_to_sync:
+  - src:
+      - ".packit.yaml"
+      - "build/package/rpm/oci-delta.spec"
+      - "build/package/rpm/oci-delta-*-vendor.tar.bz2"
+    dest: .
 
 srpm_build_deps:
   - git
@@ -14,6 +24,7 @@ srpm_build_deps:
   - go-vendor-tools
   - python3-tomlkit
   - askalono-cli
+  - rpmdevtools
 
 actions:
   post-modifications:
@@ -29,11 +40,20 @@ actions:
       cd ${PACKIT_UPSTREAM_REPO}
       git archive --prefix=oci-delta-${VERSION}/ HEAD | gzip > ${BASE_DIR}/oci-delta-${VERSION}.tar.gz
       go_vendor_archive create --config ${GO_VENDOR_TOOLS_CONFIG} ${SPEC_FILE}
+      VENDOR_TAR=${BASE_DIR}/oci-delta-${VERSION}-vendor.tar.bz2
+      TMPDIR=$(mktemp -d)
+      tar xf ${VENDOR_TAR} -C ${TMPDIR}
       go_vendor_license \
         --config ${GO_VENDOR_TOOLS_CONFIG} \
         --path ${SPEC_FILE} \
         report \
-        --verify-spec
+        --verify-spec \
+        > ${TMPDIR}/vendor/LICENSE-BREAKDOWN.txt
+      tar cjf ${VENDOR_TAR} -C ${TMPDIR} vendor
+      rm -rf ${TMPDIR}
+      if [ -n "${PACKIT_DOWNSTREAM_REPO}" ]; then
+        cp "${VENDOR_TAR}" "${PACKIT_DOWNSTREAM_REPO}"
+      fi
       '
 
 jobs:
@@ -48,3 +68,32 @@ jobs:
       - "fedora-latest-aarch64"
       - "fedora-rawhide-x86_64"
       - "fedora-rawhide-aarch64"
+
+  # Propose downstream PRs to Fedora dist-git on new GitHub release
+  - job: propose_downstream
+    trigger: release
+    dist_git_branches:
+      - "fedora-development"
+      - "fedora-latest-stable"
+
+  # Koji build when Packit PRs are merged in dist-git
+  - job: koji_build
+    trigger: commit
+    allowed_pr_authors:
+      - packit
+      - all_committers
+    dist_git_branches:
+      - "fedora-latest-stable"
+      - "fedora-latest"
+      - "fedora-rawhide"
+
+  # Bodhi update after Koji build
+  - job: bodhi_update
+    trigger: commit
+    allowed_builders:
+      - packit
+      - all_committers
+    dist_git_branches:
+      - "fedora-latest-stable"
+      - "fedora-latest"
+      - "fedora-rawhide"
