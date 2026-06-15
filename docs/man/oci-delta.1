@@ -1,0 +1,324 @@
+.TH OCI-DELTA 1 "June 2026" "oci-delta 0.2.0" "User Commands"
+.SH NAME
+oci-delta \- create and apply delta files between OCI image archives
+.SH SYNOPSIS
+.B oci-delta
+.I subcommand
+.RI [ OPTIONS ]
+.RI [ ARGUMENTS ]
+.PP
+.B oci-delta create
+.RB [ \-v | \-\-verbose ]
+.RB [ \-\-debug ]
+.RB [ \-j | \-\-jobs
+.IR N ]
+.RB [ \-\-signature
+.IR FILE ]
+.I old-image new-image output
+.PP
+.B oci-delta apply
+.RB [ \-\-ostree-repo
+.IR PATH ]
+.RB [ \-\-directory
+.IR PATH ]
+.RB [ \-\-container-storage
+.IR PATH ]
+.RB [ \-\-verify-key
+.IR FILE ]
+.RB [ \-\-debug ]
+.I delta-file output
+.PP
+.B oci-delta import
+.RB [ \-\-container-storage
+.IR PATH ]
+.RB [ \-t | \-\-tag
+.IR NAME ]
+.RB [ \-\-verify-key
+.IR FILE ]
+.RB [ \-\-debug ]
+.I delta-file
+.SH DESCRIPTION
+.B oci-delta
+creates and applies delta files between OCI image archives for bootc systems.
+Delta files are significantly smaller than full OCI archives because they exclude
+layers already present on the target system and use binary diffs (tar-diff) for
+changed layers.
+.PP
+The tool operates on OCI image archives and supports three modes of operation:
+creating deltas between two images, applying deltas to reconstruct full images,
+and directly importing deltas into container storage.
+.PP
+Delta files are OCI artifacts that can be stored in registries or distributed
+via removable media for air-gapped environments.
+.SH SUBCOMMANDS
+.SS create
+Create a delta between two OCI images.
+.PP
+.B Syntax:
+.PP
+.RS
+.B oci-delta create
+.RB [ OPTIONS ]
+.I old-image new-image output
+.RE
+.PP
+.B Arguments:
+.TP
+.I old-image
+Old/source image. Supported formats:
+.BR oci-archive: \fIPATH\fR,
+.BR oci: \fIPATH\fR,
+or
+.BR containers-storage: \fIREF\fR.
+If no type prefix is given, oci-archive is used.
+.TP
+.I new-image
+New/target image (same format as old-image).
+.TP
+.I output
+Output delta file (oci-archive:PATH or oci:PATH).
+.PP
+.B Options:
+.TP
+.BR \-v ", " \-\-verbose
+Show statistics after delta creation, including layer counts and bytes saved.
+.TP
+.B \-\-debug
+Show detailed progress information during delta creation.
+.TP
+.BR \-j ", " \-\-jobs =\fIN\fR
+Maximum number of parallel tar-diff workers (default: number of CPUs).
+.TP
+.B \-\-signature =\fIFILE\fR
+Signature OCI artifact to embed in the delta. Can be specified multiple times
+to embed multiple signatures. Enables offline signature verification during apply/import.
+.PP
+.SS apply
+Apply a delta to reconstruct a full OCI image archive.
+.PP
+.B Syntax:
+.PP
+.RS
+.B oci-delta apply
+.RB [ OPTIONS ]
+.I delta-file output
+.RE
+.PP
+.B Arguments:
+.TP
+.I delta-file
+Path to the delta file to apply.
+.TP
+.I output
+Output image (oci-archive:PATH or oci:PATH).
+If no type prefix is given, oci-archive is used.
+.PP
+.B Options:
+.TP
+.B \-\-ostree-repo =\fIPATH\fR
+OSTree repository path for delta source data (default: /ostree/repo).
+Auto-detects the source image ref via config digest.
+The --ostree-repo is the default on bootc systems.
+.TP
+.B \-\-directory =\fIPATH\fR
+Source directory containing layer files for delta reconstruction.
+Alternative to --ostree-repo.
+.TP
+.B \-\-container-storage =\fIPATH\fR
+Podman container storage root for delta reconstruction.
+Alternative to --ostree-repo.
+.TP
+.B \-\-verify-key =\fIFILE\fR
+Path to cosign public key in PEM format for signature verification
+If specified, the delta's embedded signature will be verified before applying.
+.TP
+.B \-\-debug
+Show detailed progress information during delta application.
+.PP
+Note: --ostree-repo, --directory, and --container-storage are mutually exclusive.
+Only one source type can be specified.
+.PP
+.SS import
+Apply a delta and import the result directly into container storage.
+.PP
+.B Syntax:
+.PP
+.RS
+.B oci-delta import
+.RB [ OPTIONS ]
+.I delta-file
+.RE
+.PP
+.B Arguments:
+.TP
+.I delta-file
+Path to the delta file to import.
+.PP
+.B Options:
+.TP
+.B \-\-container-storage =\fIPATH\fR
+Podman container storage root (default: system default location).
+.TP
+.BR \-t ", " \-\-tag =\fINAME\fR
+Tag name for the imported image (e.g., myimage:latest).
+.TP
+.B \-\-verify-key =\fIFILE\fR
+Path to cosign public key in PEM format for signature verification
+.TP
+.B \-\-debug
+Show detailed progress information during import.
+.PP
+After a successful import, the image ID is printed to stdout and can be used
+with podman or other container tools.
+.SH EXIT STATUS
+.TP
+.B 0
+Success. The operation completed without errors.
+.TP
+.B 1
+An error occurred. Error details are written to stderr.
+.SH EXAMPLES
+.TP
+.B Create a delta between two OCI archives:
+.PP
+.nf
+.RS
+$ oci-delta create old.oci-archive new.oci-archive update.oci-delta
+.RE
+.fi
+.PP
+.TP
+.B Create a delta with statistics:
+.PP
+.nf
+.RS
+$ oci-delta create --verbose old.oci new.oci delta.oci
+
+Delta creation statistics:
+  Old image layers: 15
+  New image layers: 16
+  Processed layers: 8
+  Skipped layers:   7
+  Processed layer bytes:  125829120
+  Tar-diff layer bytes:   8388608
+  Original layer bytes:   12582912
+  Bytes saved:            104857600 (83.3%)
+.RE
+.fi
+.PP
+.TP
+.B Apply a delta on a bootc system:
+.PP
+.nf
+.RS
+$ oci-delta apply update.oci-delta new.oci-archive
+$ bootc switch --transport=oci-archive new.oci-archive
+$ rm new.oci-archive
+.RE
+.fi
+.PP
+.TP
+.B Import a delta directly into container storage:
+.PP
+.nf
+.RS
+$ oci-delta import --tag myapp:v2.0 update.oci-delta
+sha256:abc123...
+$ podman images
+REPOSITORY    TAG       IMAGE ID      CREATED        SIZE
+myapp         v2.0      abc123...     1 minute ago   500 MB
+.RE
+.fi
+.PP
+.TP
+.B Create delta with embedded signature:
+.PP
+.nf
+.RS
+$ oci-delta create --signature signature.oci \\
+    old.oci new.oci delta.oci
+.RE
+.fi
+.PP
+.TP
+.B Apply delta with signature verification:
+.PP
+.nf
+.RS
+$ oci-delta apply --verify-key cosign.pub \\
+    signed-delta.oci output.oci
+.RE
+.fi
+.PP
+.TP
+.B Air-gapped USB workflow:
+.PP
+.nf
+.RS
+# On internet-connected system: create delta
+$ oci-delta create \\
+    containers-storage:registry.io/app:v1.0 \\
+    containers-storage:registry.io/app:v2.0 \\
+    /mnt/usb/app-update.delta
+
+# Transfer USB drive to air-gapped system
+
+# On air-gapped bootc system: apply and install
+$ oci-delta apply /mnt/usb/app-update.delta app-v2.oci
+$ bootc switch --transport=oci-archive app-v2.oci
+$ reboot
+.RE
+.fi
+.PP
+.TP
+.B Use container storage as delta source:
+.PP
+.nf
+.RS
+$ oci-delta apply --container-storage /var/lib/containers/storage \\
+    delta.oci output.oci
+.RE
+.fi
+.PP
+.TP
+.B Use custom directory as delta source:
+.PP
+.nf
+.RS
+$ oci-delta apply --directory /path/to/layers \\
+    delta.oci output.oci
+.RE
+.fi
+.SH FILES
+.TP
+.I /ostree/repo
+Default OSTree repository path for delta source data on bootc systems.
+Layer files from installed images are stored as objects under this directory.
+.TP
+.I /var/tmp/oci-delta-*
+Temporary working directories created during delta operations.
+Automatically cleaned up on successful completion.
+.TP
+.I /var/lib/containers/storage
+Default podman container storage location (system default).
+.SH REQUIREMENTS
+The target system must run bootc version 1.15.0 or later for proper layer
+deduplication using diff_ids.
+.SH SEE ALSO
+.BR bootc (8),
+.BR podman (1),
+.BR ostree (1),
+.BR cosign (1)
+.PP
+Project homepage: <https://github.com/containers/oci-delta>
+.PP
+Delta file format specification: See README.md in the source repository.
+.SH AUTHORS
+.B oci-delta
+was written by the Containers organization.
+.PP
+See MAINTAINERS.md in the source repository for the current list of maintainers.
+.SH COPYRIGHT
+Copyright \(co 2026 the oci-delta authors.
+.PP
+Licensed under the Apache License, Version 2.0.
