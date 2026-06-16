@@ -32,6 +32,7 @@ fmt:
 
 install:
 	go install ./cmd/oci-delta
+	install -Dm644 docs/man/oci-delta.1 $(DESTDIR)$(PREFIX)/share/man/man1/oci-delta.1
 
 #
 # RPM packaging

@@ -59,6 +59,8 @@ export GOFLAGS+=" -mod=vendor"
 %install
 install -m 0755 -vd                          %{buildroot}%{_bindir}
 install -m 0755 -vp _bin/oci-delta           %{buildroot}%{_bindir}/
+install -m 0755 -vd                          %{buildroot}%{_mandir}/man1
+install -m 0644 -vp docs/man/oci-delta.1     %{buildroot}%{_mandir}/man1/
 
 %check
 export GOFLAGS="-buildmode=pie"
@@ -74,6 +76,7 @@ cd $PWD/_build/src/%{goipath}
 %files
 %doc README.md
 %{_bindir}/oci-delta
+%{_mandir}/man1/oci-delta.1*
 
 %changelog
 * Thu May 29 2025 Alexander Larsson <alexl@redhat.com> - 0.1.0-1
