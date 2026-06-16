@@ -1,5 +1,4 @@
 /oci-delta
-go.sum
 rpmbuild/
 .claude/
 .github/
